@@ -1,7 +1,7 @@
 {
     "C1#test.jpg": {
-        "HopDistance": 1,
-        "ClientPort": "56283",
-        "nexthop": null
+        "HopDistance": 2,
+        "ClientPort": "54677",
+        "nexthop": "D"
     }
 }

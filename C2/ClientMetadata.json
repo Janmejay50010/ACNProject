@@ -1,3 +1,8 @@
 {
-
+    "C2": {
+        "PublickKey": "C2",
+        "PrivateKey": "Hahah",
+        "Port": "42169",
+        "RouterPort": 43695
+    }
 }

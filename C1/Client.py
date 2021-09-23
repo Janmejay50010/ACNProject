@@ -115,9 +115,8 @@ class Client():
         
     def FindToRouter(self, filename):
         #check if file exists or not
-
-        OwnerKey = self.getOwnerKey(filename)
         try:
+            OwnerKey = self.getOwnerKey(filename)
             self.RouterPort = self.getRouterPort()
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect(('0.0.0.0', self.RouterPort))
@@ -134,11 +133,12 @@ class Client():
         _, Publickey, filename, DestinationPort = message.split(delimiter)
 
         #check if file exists
+        print("Sending file {} to destination {}".format(filename, DestinationPort))
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect(('0.0.0.0', int(DestinationPort)))
 
-            message = "SendFile" + delimiter + filename
+            message = "ReceiveFile" + delimiter + filename
             s.sendall(message.encode('utf-8'))
             sleep(1)
             
@@ -158,7 +158,7 @@ class Client():
     def ReceiveFile(self, connection, addr, message):
         try:
             _, filename = message.split(delimiter)
-
+            print("Receiving file {}".format(filename))
             with open('./' + filename, 'wb') as f:
                 file_data = connection.recv(1024)
                 while file_data:
