@@ -1,10 +1,3 @@
 1. Error Handling in all cases
-2. I am not closing connection anywhere
-3. Testing all functions
-4. No comments given
+2. Issue of client ip getting redundant stored in router's table
 
-check that file exists before registering
-old ports of CLients that router is reading from Mytable.json
-
-issue of next hop
-issue of client ip getting redundant stored in router's table
