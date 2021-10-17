@@ -33,7 +33,8 @@ class Client():
 
         self.RouterPort = self.getRouterPort()
         
-        print("My port=> ",self.port, "MyRouterPort=> ", self.RouterPort)
+        #print("My port=> ",self.port, "MyRouterPort=> ", self.RouterPort)
+        print("Client is online now, Connected with Router {}".format(self.RouterName))
         self.updateYourInfo()
     
     def getRouterPort(self):
@@ -180,7 +181,7 @@ class Client():
             s.sendall(message.encode('utf-8'))
 
         except Exception as e:
-            print("Error while Sending Find to Router {} for file {} is ".format(self.RouterName, e))
+            print("Error while Sending Find request to Router {} for file {} is ".format(self.RouterName, e))
 
         s.close()
 
@@ -188,7 +189,7 @@ class Client():
         _, OwnerName, filename, DestinationPort = message.split(delimiter)
 
         #check if file exists
-        print("Sending file {} to destination {}".format(filename, DestinationPort))
+        print("Sending file {} to Router".format(filename))
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect(('0.0.0.0', int(DestinationPort)))
@@ -196,7 +197,7 @@ class Client():
             message = "ReceiveFile" + delimiter + filename + delimiter + self.Name
             message = self.encrypt(message) 
             s.sendall(message.encode('utf-8'))
-            sleep(1)
+            sleep(.5)
             
             with open('./' + filename, 'rb') as fp:
                 bytes_to_read = 1024

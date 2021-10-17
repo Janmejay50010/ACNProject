@@ -1,6 +1,6 @@
 {
     "C2": {
-        "Port": "39809",
-        "RouterPort": 39795
+        "Port": "52777",
+        "RouterPort": 39239
     }
 }

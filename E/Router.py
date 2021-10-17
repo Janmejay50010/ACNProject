@@ -21,7 +21,10 @@ class Router():
         self.sock = socket.socket()
         self.sock.bind(('', 0))
         self.port = str(self.sock.getsockname()[1])
-        print("My Port=> ", self.port, "Parent's Port=> ", self.getParentAddr())
+
+        #print("My Port=> ", self.port, "Parent's Port=> ", self.getParentAddr())
+        add = ' My Parent is {}'.format(self.Parent) if self.Parent else ' I am root'
+        print("Router is online now," + add)
 
         self.updateYourInfo()
 
@@ -36,11 +39,11 @@ class Router():
         with open(RouterMetadataPath, "w") as f:
             json.dump(data, f, indent=4)
 
-    def UpdateYourTable(self, key, filename, hop, ClientPort, nexthop = None):
+    def UpdateYourTable(self, ClientName, filename, hop, ClientPort, nexthop = None):
         flag = False
         with open(MyTablePath, "r") as f:
             data = json.load(f)
-            KeyName = key + delimiter + filename
+            KeyName = ClientName + delimiter + filename
             if KeyName not in data:
                 data[KeyName] = {}
                 flag = True
@@ -101,106 +104,113 @@ class Router():
             self.FindFromRouter(connection, addr, message)
     
     def RegisterFromClient(self, connection, addr, message):
-        _, key, filename, ClientPort = message.split(delimiter)
+        _, ClientName, filename, ClientPort = message.split(delimiter)
         hop = 1
-        print("Received Registration from client {} for file {}".format(ClientPort, filename))
+        print("Received Register request from client for file {}".format(filename))
 
-        updated = self.UpdateYourTable(key, filename, hop, ClientPort, None)
+        updated = self.UpdateYourTable(ClientName, filename, hop, ClientPort, None)
 
         if updated and self.Parent is not None:
             try:
-                print("Sending registration to parent {} for file {}".format(self.Parent, filename))
-                self.RegisterToParent(key, filename, hop+1, ClientPort, self.Name)
+                #print("Sending registration to parent {} for file {}".format(self.Parent, filename))
+                self.RegisterToParent(ClientName, filename, hop+1, ClientPort, self.Name)
             except Exception as e:
-                print("Error while registering from Client for file {} is {}".format(key+delimiter+filename, e))
+                print("Error while sending Register request from Client for file {} is {}".format(ClientName+delimiter+filename, e))
 
-    def RegisterToParent(self, key, filename, hop, ClientPort, nexthop):
+    def RegisterToParent(self, ClientName, filename, hop, ClientPort, nexthop):
         try:
-            print("Sending registration to parent {} for file {}".format(self.Parent, key+delimiter+filename))
+            print("Sending Register request to Parent {} for file {}".format(self.Parent, ClientName+delimiter+filename))
             ParentPort = self.getParentAddr()
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect(('0.0.0.0', ParentPort))
-            message = "RegisterFromRouter" + delimiter + str(key) + delimiter + filename + delimiter + str(hop) + delimiter + ClientPort + delimiter + nexthop
+            message = "RegisterFromRouter" + delimiter + str(ClientName) + delimiter + filename + delimiter + str(hop) + delimiter + ClientPort + delimiter + nexthop
             s.sendall(message.encode('utf-8'))
         except Exception as e:
-            print("Error while sending registration to parent for file {} is {}".format(key+delimiter+filename, e))
+            print("Error while sending Register request to Parent for file {} is {}".format(ClientName+delimiter+filename, e))
         
         s.close()
     
     def RegisterFromRouter(self, connection, addr, message):
-        _, key, filename, hop, ClientPort, nexthop = message.split(delimiter)
+        _, ClientName, filename, hop, ClientPort, nexthop = message.split(delimiter)
         #Important to convert to integer first
         hop = int(hop)
         
-        print("Received Registration from Router for file {}".format(filename))
+        print("Received Register request from Router for file {}".format(filename))
         
-        updated = self.UpdateYourTable(key, filename, hop, ClientPort, nexthop)
+        updated = self.UpdateYourTable(ClientName, filename, hop, ClientPort, nexthop)
 
         if updated and self.Parent is not None:
             try:
-                self.RegisterToParent(key, filename, hop+1, ClientPort, self.Name)
+                self.RegisterToParent(ClientName, filename, hop+1, ClientPort, self.Name)
             except Exception as e:
-                print("Error while registering from router {} for file {} is {}".format(nexthop, key+delimiter+filename, e))
+                print("Error while Processing Register request from router for file {} is {}".format(ClientName+delimiter+filename, e))
     
     def FindFromClient(self, connection, addr, message):
         try:
-            _, key, filename, ClientPort = message.split(delimiter)
+            _, OwnerName, filename, ClientPort = message.split(delimiter)
             #OwnerKey = self.getOwnerKey(filename)
-            print("Received Find from Client {} for file {}".format(ClientPort, filename))
+            #print("Received Find request from Client {} for file {}".format(ClientPort, filename))
+            print("Received Find request from Client for file {}".format(filename))
 
             with open(MyTablePath, "r") as f:
                 data = json.load(f)
-                KeyName = key + delimiter + filename
+                KeyName = OwnerName + delimiter + filename
                 if KeyName not in data:
                     if self.Parent is None:
                         print("File does not exist")
                     else:
-                        self.FindToParent(key, filename, ClientPort)
+                        self.FindToParent(OwnerName, filename, ClientPort)
                 else:
                     destinationPort = int(data[KeyName]['ClientPort'])
-                    self.FindToClient(key, filename, ClientPort, destinationPort)
+                    self.FindToClient(OwnerName, filename, ClientPort, destinationPort)
         
         except Exception as e:
-            print("Error while processing find from client for file {} is {}".format(filename, e))
+            print("Error while processing Find request from client for file {} is {}".format(filename, e))
 
-    def FindToParent(self, key, filename, ClientPort):
-        print("Sending find to parent for file {}".format(filename))
+    def FindToParent(self, OwnerName, filename, ClientPort):
+        print("Sending Find request to parent {} for file {}".format(self.Parent, filename))
         try:
             ParentPort = self.getParentAddr()
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect(('0.0.0.0', ParentPort))
-            message = "FindFromRouter" + delimiter + str(key) + delimiter + filename + delimiter + ClientPort
+            message = "FindFromRouter" + delimiter + str(OwnerName) + delimiter + filename + delimiter + ClientPort
             s.sendall(message.encode('utf-8'))
 
         except Exception as e:
             print("Error while sending find to parent the file {} is {}".format(filename, e))
+        
+        sleep(.5)
+        print("Sending File {} to Child Node".format(filename))
 
     def FindFromRouter(self, connection, addr, message):
-        _, key, filename, ClientPort = message.split(delimiter)
-        print("Received Find from Router for file {}".format(filename))
+        _, OwnerName, filename, ClientPort = message.split(delimiter)
+        print("Received Find request from Router for file {}".format(filename))
         
         with open(MyTablePath, "r") as f:
             data = json.load(f)
-            KeyName = key + delimiter + filename
+            KeyName = OwnerName + delimiter + filename
             if KeyName not in data:
                 if self.Parent is None:
                     print("File does not exist")
                 else:
-                    self.FindToParent(key, filename, ClientPort)
+                    self.FindToParent(OwnerName, filename, ClientPort)
             else:
                 destinationPort = data[KeyName]['ClientPort']
-                self.FindToClient(key, filename, ClientPort, destinationPort)
+                self.FindToClient(OwnerName, filename, ClientPort, destinationPort)
 
-    def FindToClient(self, key, filename, ClientPort, destinationPort):
+    def FindToClient(self, OwnerName, filename, ClientPort, destinationPort):
         print("Sending find to client {} for file {}".format(destinationPort, filename))
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect(('0.0.0.0', int(destinationPort)))
-            message = "FindFromRouter" + delimiter + str(key) + delimiter + filename + delimiter + ClientPort
+            message = "FindFromRouter" + delimiter + str(OwnerName) + delimiter + filename + delimiter + ClientPort
             s.sendall(message.encode('utf-8'))
         
         except Exception as e:
-            print("Error while sending find to Client for file {} is {}".format(key + delimiter + filename, e))
+            print("Error while sending find to Client for file {} is {}".format(OwnerName + delimiter + filename, e))
+
+        sleep(.5)
+        print("Sending File {} to Child Node".format(filename))
 
         s.close()   
 
