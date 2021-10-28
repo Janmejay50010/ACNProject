@@ -24,7 +24,7 @@ class Router():
 
         #print("My Port=> ", self.port, "Parent's Port=> ", self.getParentAddr())
         add = ' My Parent is {}'.format(self.Parent) if self.Parent else ' I am root'
-        print("Router is online now," + add)
+        print("Resolution Handler is online now," + add)
 
         self.updateYourInfo()
 
@@ -74,7 +74,7 @@ class Router():
                 data = json.load(f)
                 ParentPort = data[self.Parent]
         except Exception as e:
-            print("Error while getting parent Router {} port is {}".format(self.Parent, e))
+            print("Error while getting parent RH {} port is {}".format(self.Parent, e))
             sys.exit()
             
         return int(ParentPort)
@@ -135,7 +135,7 @@ class Router():
         #Important to convert to integer first
         hop = int(hop)
         
-        print("Received Register request from Router for file {}".format(filename))
+        print("Received Register request from RH for file {}".format(filename))
         
         updated = self.UpdateYourTable(ClientName, filename, hop, ClientPort, nexthop)
 
@@ -143,7 +143,7 @@ class Router():
             try:
                 self.RegisterToParent(ClientName, filename, hop+1, ClientPort, self.Name)
             except Exception as e:
-                print("Error while Processing Register request from router for file {} is {}".format(ClientName+delimiter+filename, e))
+                print("Error while Processing Register request from RH for file {} is {}".format(ClientName+delimiter+filename, e))
     
     def FindFromClient(self, connection, addr, message):
         try:
@@ -184,7 +184,7 @@ class Router():
 
     def FindFromRouter(self, connection, addr, message):
         _, OwnerName, filename, ClientPort = message.split(delimiter)
-        print("Received Find request from Router for file {}".format(filename))
+        print("Received Find request from RH for file {}".format(filename))
         
         with open(MyTablePath, "r") as f:
             data = json.load(f)
