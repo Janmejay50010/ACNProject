@@ -31,7 +31,7 @@ tively. Routing between the RHs is performed
 directly on the name.
 
 ## Working
-* For Starting Router: python3 Router.py [RouterLabel] [ParentRouterLabel]
+* For Starting Resolution Handler: python3 RH.py [Label] [ParentLabel]
 * For Starting Client: python3 Client.py [ClientLable] [RouterLabel]
 
 ### Commands
